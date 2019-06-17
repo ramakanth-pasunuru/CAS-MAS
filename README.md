@@ -19,15 +19,15 @@ Download the QNLI, RTE, and WNLI datasets from [GLUE benchmark](https://gluebenc
 
 Place the downloaded and processed data in the following format:
 
- .
+    .
     ├── main.py
     ├── data                   
     │   ├── glue_tasks        
     │   │    ├── qnli
-    │   │    |    ├── [train/val/test].sequence_1
-    │   │    |    ├── [train/val/test].sequence_2
-    │   │    |    ├── [train/val/test].labels
-    │   │    |    ├── label_vocab
+    │   │    │    ├── (train/val/test).sequence_1
+    │   │    │    ├── (train/val/test).sequence_2
+    │   │    │    ├── (train/val/test).labels
+    │   │    │    ├── label_vocab
     └── ...
     
 Further we precompute the ELMO embeddings using the [allennlp](https://github.com/allenai/allennlp/blob/master/tutorials/how_to/elmo.md) module.
