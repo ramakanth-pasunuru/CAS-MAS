@@ -1,6 +1,6 @@
 # Continual and Multi-Task Architecture Search
 
-PyTorch implementation of [Continual and Multi-Task Architecture Search](https://arxiv.org/abs/).
+PyTorch implementation of [Continual and Multi-Task Architecture Search](https://arxiv.org/abs/1906.05226).
 
 Authors: Ramakanth Pasunuru and Mohit Bansal
 
