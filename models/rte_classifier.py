@@ -115,7 +115,41 @@ class RTEClassifier(nn.Module):
 
         return self.gamma*(normed_weights[0]*sent_batch[:,0,:,:] + 
                             normed_weights[1]*sent_batch[:,1,:,:] + 
-                            normed_weights[2]*sent_batch[:,2,:,:]) 
+                            normed_weights[2]*sent_batch[:,2,:,:])
+
+
+    def birnn_encoder(self, input_embs, dag):
+        
+        batch_size, step_size, _ = input_embs.shape
+        if self.args.hidden_varient == 'lstm':
+            ht_fw = [Variable(torch.FloatTensor(batch_size,self.hidden_dim).zero_(), requires_grad=False).cuda(),
+                    Variable(torch.FloatTensor(batch_size,self.hidden_dim).zero_(), requires_grad=False).cuda()]
+            ht_bw = [Variable(torch.FloatTensor(batch_size,self.hidden_dim).zero_(), requires_grad=False).cuda(),
+                    Variable(torch.FloatTensor(batch_size,self.hidden_dim).zero_(), requires_grad=False).cuda()]
+        else:
+            ht_fw = Variable(torch.FloatTensor(batch_size,self.hidden_dim).zero_(), requires_grad=False).cuda()
+            ht_bw = Variable(torch.FloatTensor(batch_size,self.hidden_dim).zero_(), requires_grad=False).cuda()
+
+        
+        outputs_fw = []
+        outputs_bw = []
+
+        for i in range(step_size):
+            output, ht_fw = self.encoder_fw(input_embs[:,i,:], ht_fw, dag)
+            outputs_fw.append(output)
+            output, ht_bw = self.encoder_bw(input_embs[:,step_size-i-1], ht_bw, dag)
+            outputs_bw.append(output)
+
+        # reverse the outputs_bw to properly concat with the outputs_fw
+        outputs_bw = outputs_bw[::-1]
+
+        outputs_fw = torch.transpose(torch.stack(outputs_fw), 0, 1)
+        outputs_bw = torch.transpose(torch.stack(outputs_bw), 0, 1)
+        
+
+        outputs = torch.cat((outputs_fw, outputs_bw), 2)
+
+        return outputs
 
     def forward(self, premise, premise_len, hypothesis, hypothesis_len):
         if self.args.use_precomputed_elmo:
@@ -164,38 +198,7 @@ class RTEClassifier(nn.Module):
 
         return logits, probs, pred
 
-    def birnn_encoder(self, input_embs, dag):
-        
-        batch_size, step_size, _ = input_embs.shape
-        if self.args.hidden_varient == 'lstm':
-            ht_fw = [Variable(torch.FloatTensor(batch_size,self.hidden_dim).zero_(), requires_grad=False).cuda(),
-                    Variable(torch.FloatTensor(batch_size,self.hidden_dim).zero_(), requires_grad=False).cuda()]
-            ht_bw = [Variable(torch.FloatTensor(batch_size,self.hidden_dim).zero_(), requires_grad=False).cuda(),
-                    Variable(torch.FloatTensor(batch_size,self.hidden_dim).zero_(), requires_grad=False).cuda()]
-        else:
-            ht_fw = Variable(torch.FloatTensor(batch_size,self.hidden_dim).zero_(), requires_grad=False).cuda()
-            ht_bw = Variable(torch.FloatTensor(batch_size,self.hidden_dim).zero_(), requires_grad=False).cuda()
 
-        
-        outputs_fw = []
-        outputs_bw = []
-
-        for i in range(step_size):
-            output, ht_fw = self.encoder_fw(input_embs[:,i,:], ht_fw, dag)
-            outputs_fw.append(output)
-            output, ht_bw = self.encoder_bw(input_embs[:,step_size-i-1], ht_bw, dag)
-            outputs_bw.append(output)
-
-        # reverse the outputs_bw to properly concat with the outputs_fw
-        outputs_bw = outputs_bw[::-1]
-
-        outputs_fw = torch.transpose(torch.stack(outputs_fw), 0, 1)
-        outputs_bw = torch.transpose(torch.stack(outputs_bw), 0, 1)
-        
-
-        outputs = torch.cat((outputs_fw, outputs_fw), 2)
-
-        return outputs
 
 
     def forward_nas(self, premise, premise_len, hypothesis, hypothesis_len,  dag):

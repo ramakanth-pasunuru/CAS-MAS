@@ -934,14 +934,12 @@ class TrainerNAS(object):
             entropy_history.extend(np_entropies)
 
             # moving average baseline
-            if self.args.use_scst:
-                baseline = self.get_reward([lstm_dag()], entropies=None, valid_idx=0)
+
+            if baseline is None:
+                baseline = rewards
             else:
-                if baseline is None:
-                    baseline = rewards
-                else:
-                    decay = self.args.ema_baseline_decay
-                    baseline = decay * baseline + (1 - decay) * rewards
+                decay = self.args.ema_baseline_decay
+                baseline = decay * baseline + (1 - decay) * rewards
 
             adv = rewards - baseline
             adv_history.extend(adv)
